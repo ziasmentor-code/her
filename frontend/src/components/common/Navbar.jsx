@@ -1,297 +1,216 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { 
-    FaPhoneAlt, 
-    FaBook, 
-    FaHandHoldingHeart, 
-    FaHeart, 
-    FaLanguage,
-    FaUser,
-    FaSignOutAlt,
-    FaSignInAlt,
-    FaUserPlus,
-    FaBars,
-    FaTimes,
-    FaBell,
-    FaExclamationTriangle,
-    FaShieldAlt,
-    FaComments,
-    FaQuestionCircle,
-    FaHome,
-    FaInfoCircle
-} from 'react-icons/fa';
-import { GiRose } from 'react-icons/gi';
-import { toast } from 'react-toastify';
+import SOSModal from './SOSModal';
 
-const Navbar = () => {
-    const { user, userRole, logout, isAuthenticated } = useAuth();
-    const navigate = useNavigate();
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [showExitConfirm, setShowExitConfirm] = useState(false);
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap');
 
-    const handleLogout = () => {
-        logout();
-        toast.success('Logged out successfully');
-        navigate('/login');
-    };
+  .nb-root {
+    font-family: 'DM Sans', sans-serif;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #faf7f4;
+    border-bottom: 0.5px solid #ecddd4;
+  }
 
-    const handleEmergencyAlert = () => {
-        // Show emergency alert
-        toast.error('🚨 EMERGENCY ALERT TRIGGERED! Help is on the way!', {
-            position: "top-center",
-            autoClose: false,
-            closeOnClick: false,
-            draggable: false,
-        });
-        
-        // You can add more emergency actions here:
-        // - Send SOS to emergency contacts
-        // - Share location
-        // - Call helpline
-        // - Redirect to safety page
-        
-        navigate('/safety');
-    };
+  .nb-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
 
-    const handleExit = () => {
-        setShowExitConfirm(true);
-    };
+  .nb-logo {
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none; flex-shrink: 0;
+  }
+  .nb-logo-mark {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: linear-gradient(135deg, #c4714a, #9e4a28);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nb-logo-mark svg { width: 14px; height: 14px; fill: #fff; }
+  .nb-logo-name {
+    font-size: 16px; font-weight: 500;
+    color: #3b1f14; letter-spacing: -0.2px;
+    font-style: italic;
+  }
 
-    const confirmExit = () => {
-        // Clear all data
-        localStorage.clear();
-        sessionStorage.clear();
-        logout();
-        
-        // Redirect to a safe page
-        window.location.href = 'https://www.google.com';
-        
-        toast.info('Exiting safely...');
-    };
+  .nb-space { flex: 1; }
 
-    // Main navigation links
-    const navLinks = [
-        { path: '/', label: 'Home', icon: FaHome, color: 'text-pink-400' },
-        { path: '/help', label: 'Get Help', icon: FaPhoneAlt, color: 'text-pink-400' },
-        { path: '/learn', label: 'Learn', icon: FaBook, color: 'text-blue-400' },
-        { path: '/support', label: 'Support', icon: FaHandHoldingHeart, color: 'text-green-400' },
-        { path: '/anonymous', label: 'Anonymous Chat', icon: FaComments, color: 'text-yellow-400' },
-        { path: '/safety', label: 'Safety Tips', icon: FaShieldAlt, color: 'text-red-400' },
-        { path: '/about', label: 'About', icon: FaInfoCircle, color: 'text-gray-400' },
-    ];
+  .nb-search { position: relative; display: flex; align-items: center; }
+  .nb-search-icon {
+    position: absolute; left: 9px;
+    color: #b09080; font-size: 13px; pointer-events: none;
+  }
+  .nb-search input {
+    padding: 6px 12px 6px 30px;
+    border: 0.5px solid #ddd0c5;
+    border-radius: 7px;
+    font-size: 13px; font-family: 'DM Sans', sans-serif;
+    color: #3b1f14; background: #f3ede7;
+    outline: none; width: 180px;
+    transition: width 0.25s, border-color 0.15s, background 0.15s;
+  }
+  .nb-search input::placeholder { color: #c4a898; }
+  .nb-search input:focus {
+    width: 230px;
+    border-color: #c4714a;
+    background: #fff;
+  }
 
-    return (
-        <>
-            <nav className="bg-[#1a1a2e] text-white shadow-lg sticky top-0 z-50">
-                <div className="container mx-auto px-4">
-                    <div className="flex justify-between items-center py-4">
-                        {/* Logo */}
-                        <Link to="/" className="text-2xl font-bold text-pink-400 flex items-center gap-2">
-                            <GiRose className="text-3xl text-pink-400" />
-                            <span>HerCircle</span>
-                        </Link>
+  .nb-actions { display: flex; align-items: center; gap: 3px; }
+  .nb-sep { width: 0.5px; height: 18px; background: #ddd0c5; margin: 0 5px; }
 
-                        {/* Desktop Navigation Links */}
-                        <div className="hidden md:flex space-x-6">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.path}
-                                    to={link.path}
-                                    className="text-gray-300 hover:text-white transition flex items-center gap-2 group"
-                                >
-                                    <link.icon className={`text-lg ${link.color} group-hover:scale-110 transition`} />
-                                    <span>{link.label}</span>
-                                </Link>
-                            ))}
-                        </div>
+  .nb-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 13px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; text-decoration: none; border: 0.5px solid transparent;
+    transition: background 0.15s, border-color 0.15s, transform 0.12s, color 0.15s;
+    white-space: nowrap;
+  }
 
-                        {/* Right Side Buttons */}
-                        <div className="hidden md:flex items-center space-x-3">
-                            {/* Emergency Alert Button */}
-                            <button
-                                onClick={handleEmergencyAlert}
-                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 animate-pulse"
-                                title="Emergency SOS"
-                            >
-                                <FaExclamationTriangle className="text-lg" />
-                                <span className="font-bold">SOS</span>
-                            </button>
+  .nb-signin {
+    background: transparent; color: #6b3a28; border-color: #ddd0c5;
+  }
+  .nb-signin:hover {
+    background: #f3ede7; border-color: #c4a898;
+    color: #3b1f14; transform: translateY(-1px);
+  }
 
-                            {/* Exit Button */}
-                            <button
-                                onClick={handleExit}
-                                className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg transition flex items-center gap-2"
-                                title="Exit Site"
-                            >
-                                <FaSignOutAlt className="text-lg" />
-                                <span>Exit</span>
-                            </button>
+  .nb-logout {
+    background: transparent; color: #9e7060; border-color: #ddd0c5;
+  }
+  .nb-logout:hover {
+    background: #fff0ed; border-color: #f4a090;
+    color: #c0392b; transform: translateY(-1px);
+  }
 
-                            {/* Auth Buttons */}
-                            {isAuthenticated ? (
-                                <>
-                                    <div className="flex items-center gap-2 bg-gray-800 px-3 py-1 rounded-full">
-                                        <FaUser className="text-pink-400" />
-                                        <span className="text-gray-300 text-sm">
-                                            {user?.display_name || user?.username}
-                                        </span>
-                                        {userRole && (
-                                            <span className="text-xs bg-pink-500 px-2 py-0.5 rounded-full">
-                                                {userRole}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="text-gray-300 hover:text-pink-400 transition flex items-center gap-2"
-                                    >
-                                        <FaSignOutAlt />
-                                        Logout
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <Link 
-                                        to="/login" 
-                                        className="text-gray-300 hover:text-pink-400 transition flex items-center gap-2"
-                                    >
-                                        <FaSignInAlt />
-                                        Login
-                                    </Link>
-                                    <Link
-                                        to="/register"
-                                        className="bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition flex items-center gap-2"
-                                    >
-                                        <FaUserPlus />
-                                        Register
-                                    </Link>
-                                </>
-                            )}
-                        </div>
+  .nb-donate {
+    background: transparent; color: #c4714a; border-color: #ddd0c5;
+  }
+  .nb-donate:hover {
+    background: #f7ede6; border-color: #c4714a;
+    transform: translateY(-1px);
+  }
 
-                        {/* Mobile Menu Button */}
-                        <button
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="md:hidden text-white focus:outline-none"
-                        >
-                            {mobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-                        </button>
-                    </div>
+  .nb-exit {
+    background: transparent; color: #9e7060;
+    border-color: transparent; padding: 5px 9px; font-size: 12.5px;
+  }
+  .nb-exit:hover {
+    background: #f3ede7; color: #6b3a28;
+    transform: translateY(-1px);
+  }
 
-                    {/* Mobile Menu */}
-                    {mobileMenuOpen && (
-                        <div className="md:hidden py-4 border-t border-gray-700">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.path}
-                                    to={link.path}
-                                    className="block py-3 text-gray-300 hover:text-pink-400 transition flex items-center gap-3"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    <link.icon className={`text-xl ${link.color}`} />
-                                    {link.label}
-                                </Link>
-                            ))}
-                            
-                            {/* Mobile Emergency & Exit Buttons */}
-                            <div className="flex gap-3 mt-4 pt-4 border-t border-gray-700">
-                                <button
-                                    onClick={handleEmergencyAlert}
-                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition flex items-center justify-center gap-2"
-                                >
-                                    <FaExclamationTriangle />
-                                    SOS
-                                </button>
-                                <button
-                                    onClick={handleExit}
-                                    className="flex-1 bg-gray-700 hover:bg-gray-800 text-white py-2 rounded-lg transition flex items-center justify-center gap-2"
-                                >
-                                    <FaSignOutAlt />
-                                    Exit
-                                </button>
-                            </div>
-                            
-                            {/* Mobile Auth */}
-                            <div className="pt-4 mt-4 border-t border-gray-700">
-                                {isAuthenticated ? (
-                                    <>
-                                        <div className="flex items-center gap-2 py-2 text-gray-300">
-                                            <FaUser className="text-pink-400" />
-                                            <span>{user?.display_name || user?.username}</span>
-                                            {userRole && (
-                                                <span className="text-xs bg-pink-500 px-2 py-0.5 rounded-full">
-                                                    {userRole}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <button
-                                            onClick={() => {
-                                                handleLogout();
-                                                setMobileMenuOpen(false);
-                                            }}
-                                            className="block w-full text-left py-2 text-pink-400 hover:text-pink-300 flex items-center gap-2"
-                                        >
-                                            <FaSignOutAlt />
-                                            Logout
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Link
-                                            to="/login"
-                                            className="block py-2 text-gray-300 hover:text-pink-400 flex items-center gap-2"
-                                            onClick={() => setMobileMenuOpen(false)}
-                                        >
-                                            <FaSignInAlt />
-                                            Login
-                                        </Link>
-                                        <Link
-                                            to="/register"
-                                            className="block py-2 text-pink-400 hover:text-pink-300 flex items-center gap-2"
-                                            onClick={() => setMobileMenuOpen(false)}
-                                        >
-                                            <FaUserPlus />
-                                            Register
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </nav>
+  .nb-sos {
+    background: #b93a2a; color: #fff;
+    border-color: transparent;
+    font-weight: 600; font-size: 12px; letter-spacing: 0.7px;
+    padding: 5px 14px;
+  }
+  .nb-sos:hover { background: #9b2d1f; transform: translateY(-1px); }
 
-            {/* Exit Confirmation Modal */}
-            {showExitConfirm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-xl p-6 max-w-md mx-4">
-                        <div className="text-center">
-                            <div className="text-5xl mb-4">⚠️</div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-2">Exit Site?</h3>
-                            <p className="text-gray-600 mb-6">
-                                Are you sure you want to exit? If you're in danger, please use the SOS button.
-                            </p>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setShowExitConfirm(false)}
-                                    className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={confirmExit}
-                                    className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition"
-                                >
-                                    Exit Now
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  .nb-user {
+    font-size: 12.5px; color: #9e7060; padding: 0 4px;
+  }
+  .nb-user strong { color: #3b1f14; font-weight: 500; }
+
+  @media (max-width: 768px) {
+    .nb-inner { padding: 0 16px; gap: 10px; }
+    .nb-search input { width: 120px; }
+    .nb-search input:focus { width: 160px; }
+    .nb-btn { padding: 5px 10px; font-size: 12px; }
+    .nb-user { display: none; }
+  }
+`;
+
+function Navbar() {
+  const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+  const [showSOS, setShowSOS] = useState(false);
+
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const isLoggedIn = !!token;
+
+  const handleSearch = (e) => {
+    if (e.key === 'Enter' && search.trim()) {
+      navigate(`/search?q=${encodeURIComponent(search.trim())}`);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  };
+
+  const handleExit = () => {
+    window.location.href = 'https://www.google.com';
+  };
+
+  return (
+    <>
+      <style>{styles}</style>
+      <nav className="nb-root">
+        <div className="nb-inner">
+
+          <Link to="/" className="nb-logo">
+            <div className="nb-logo-mark">
+              <svg viewBox="0 0 16 16">
+                <path d="M8 2C5.2 2 3 4.2 3 7c0 2 1.1 3.7 2.8 4.6L8 14l2.2-2.4C11.9 10.7 13 9 13 7c0-2.8-2.2-5-5-5z"/>
+              </svg>
+            </div>
+            <span className="nb-logo-name">HerCircle</span>
+          </Link>
+
+          <div className="nb-space" />
+
+          <div className="nb-search">
+            <span className="nb-search-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="Search…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleSearch}
+            />
+          </div>
+
+          <div className="nb-actions">
+            <Link to="/donate" className="nb-btn nb-donate">Donate</Link>
+
+            <div className="nb-sep" />
+
+            {isLoggedIn ? (
+              <>
+                {user?.username && (
+                  <span className="nb-user">Hi, <strong>{user.username}</strong></span>
+                )}
+                <button className="nb-btn nb-logout" onClick={handleLogout}>Log Out</button>
+              </>
+            ) : (
+              <Link to="/login" className="nb-btn nb-signin">Sign In</Link>
             )}
-        </>
-    );
-};
+
+            <div className="nb-sep" />
+
+            <button className="nb-btn nb-exit" onClick={handleExit}>&#x2715; Exit</button>
+            <button className="nb-btn nb-sos" onClick={() => setShowSOS(true)}>SOS</button>
+          </div>
+
+        </div>
+      </nav>
+
+      {showSOS && <SOSModal onClose={() => setShowSOS(false)} />}
+    </>
+  );
+}
 
 export default Navbar;

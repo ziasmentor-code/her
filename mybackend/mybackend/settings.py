@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     
     # Third party apps
     'rest_framework',
+    'rest_framework.authtoken',  # ← ADD THIS LINE
     'corsheaders',
     'rest_framework_simplejwt',
     'django_filters',
@@ -35,8 +36,11 @@ INSTALLED_APPS = [
     'safety',
     'counseling',
     'jobs',
-    'courses',  # Add this line
+    'courses',
     'her',
+    'api',
+    'donate',
+    
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -108,15 +112,13 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # --- Django REST Framework Settings ---
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated', # Secure by default
-    ),
-    'DEFAULT_FILTER_BACKENDS': (
-        'django_filters.rest_framework.DjangoFilterBackend',
-    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
 }
 
 # --- Simple JWT Settings ---
@@ -152,4 +154,13 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True # Set to False and use CORS_ALLOWED_ORIGINS in production
 CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173']

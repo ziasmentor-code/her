@@ -1,14 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from . import views
+from .views import SOSAlertViewSet, EmergencyContactViewSet, EmergencyResourceViewSet
 
 router = DefaultRouter()
-router.register('helplines', views.HelplineViewSet, basename='helpline')
-router.register('contacts', views.EmergencyContactViewSet, basename='contact')
-router.register('sos', views.SOSAlertViewSet, basename='sos')
-router.register('tips', views.SafetyTipViewSet, basename='tip')
-router.register('location', views.LocationShareViewSet, basename='location')
-router.register('checkin', views.SafetyCheckInViewSet, basename='checkin')
+router.register('sos-alerts', SOSAlertViewSet, basename='sos')
+router.register('emergency-contacts', EmergencyContactViewSet, basename='contacts')
+router.register('emergency-resources', EmergencyResourceViewSet, basename='resources')
 
 urlpatterns = [
     path('', include(router.urls)),

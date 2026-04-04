@@ -21,7 +21,12 @@ urlpatterns = [
     path('api/anonymous/', include('anonymous_posts.urls')),
     path('api/safety/', include('safety.urls')),
     path('api/counseling/', include('counseling.urls')),
-    path('api/jobs/', include('jobs.urls')),  # Add this line for Jobs App
+    path('api/jobs/', include('jobs.urls')),
+    
+    # API app for login/register
+    path('api/', include('api.urls')),  
+     path('api/donate/', include('donate.urls')),
+    # Add this for login/register endpoints
     
     # Home page (your weather app)
     path('', include('her.urls')),
