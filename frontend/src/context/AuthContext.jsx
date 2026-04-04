@@ -1,3 +1,4 @@
+// frontend/src/context/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import api from '../services/api';
 
@@ -8,85 +9,67 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    useEffect(() => {
+    const fetchUser = async () => {
         const token = localStorage.getItem('access_token');
-        if (token) {
-            fetchUser();
-        } else {
+        
+        if (!token) {
             setLoading(false);
+            return;
         }
-    }, []);
-
-const fetchUser = async () => {
-    try {
-        const response = await api.get('/auth/users/me/');
-        setUser(response.data);
-    } catch (error) {
-        console.error('Error fetching user:', error);
-        if (error.response?.status === 401) {
-            // Token expired, try to refresh
-            try {
-                const refreshToken = localStorage.getItem('refresh_token');
-                const refreshResponse = await api.post('/auth/token/refresh/', {
-                    refresh: refreshToken
-                });
-                localStorage.setItem('access_token', refreshResponse.data.access);
-                // Retry fetching user
-                const userResponse = await api.get('/auth/users/me/');
-                setUser(userResponse.data);
-            } catch (refreshError) {
-                logout();
-            }
-        } else {
-            logout();
-        }
-    } finally {
-        setLoading(false);
-    }
-};
-
-    const login = async (username, password) => {
+        
         try {
-            const response = await api.post('/auth/token/', { username, password });
-            localStorage.setItem('access_token', response.data.access);
-            localStorage.setItem('refresh_token', response.data.refresh);
-            await fetchUser();
-            return { success: true };
-        } catch (error) {
-            return { success: false, error: error.response?.data?.detail || 'Login failed' };
+            // ✅ Fix: Use correct endpoint (admin/users/me/ instead of auth/users/me/)
+            const response = await api.get('/admin/users/me/');
+            setUser(response.data);
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching user:', err);
+            // If token is invalid, clear it
+            if (err.response?.status === 401) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                localStorage.removeItem('user');
+                setUser(null);
+            }
+            setError(err.message);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const register = async (userData) => {
+    const login = async (email, password) => {
         try {
-            const response = await api.post('/auth/register/', userData);
-            return { success: true, data: response.data };
-        } catch (error) {
-            return { success: false, error: error.response?.data || 'Registration failed' };
+            const response = await api.post('/admin/login/', { email, password });
+            
+            if (response.data.success) {
+                localStorage.setItem('access_token', response.data.access);
+                localStorage.setItem('refresh_token', response.data.refresh);
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+                setUser(response.data.user);
+                return { success: true };
+            }
+            return { success: false, error: response.data.error };
+        } catch (err) {
+            return { success: false, error: err.response?.data?.error || 'Login failed' };
         }
     };
 
     const logout = () => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
         setUser(null);
     };
 
-    const value = {
-        user,
-        login,
-        register,
-        logout,
-        isAuthenticated: !!user,
-        loading,
-        userRole: user?.role,
-        isUser: user?.role === 'USER',
-        isMentor: user?.role === 'MENTOR',
-        isDoctor: user?.role === 'DOCTOR',
-        isPolice: user?.role === 'POLICE',
-        isAdmin: user?.role === 'ADMIN',
-    };
+    useEffect(() => {
+        fetchUser();
+    }, []); // ✅ Empty dependency array - runs only once
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={{ user, loading, error, login, logout, fetchUser }}>
+            {children}
+        </AuthContext.Provider>
+    );
 };

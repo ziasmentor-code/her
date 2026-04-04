@@ -1,18 +1,25 @@
-﻿from rest_framework import serializers
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
+﻿# api/serializers.py
+from rest_framework import serializers
+from .models import User, Job, Course, Chat
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+        fields = ['id', 'username', 'email', 'name', 'role', 'status', 
+                  'phone', 'address', 'profile_image', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
-class PostSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    title = serializers.CharField()
-    content = serializers.CharField()
+class JobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Job
+        fields = '__all__'
 
-class CommentSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    content = serializers.CharField()
+class CourseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = '__all__'
+
+class ChatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Chat
+        fields = '__all__'

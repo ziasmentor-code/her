@@ -1,42 +1,108 @@
-from rest_framework import viewsets, generics, permissions, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
-from django.db import transaction
-from .models import MentorProfile, DoctorProfile
-from .serializers import (
-    UserSerializer, RegisterSerializer, MentorSerializer, 
-    DoctorSerializer
-)
-from .permissions import IsAdmin, IsMentor, IsDoctor, IsUser
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
-class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    permission_classes = [permissions.AllowAny]
-    serializer_class = RegisterSerializer
+# ============================================
+# CUSTOM ADMIN LOGIN PAGE
+# ============================================
+def admin_login_page(request):
+    """Custom Admin Login Page"""
+    if request.user.is_authenticated and request.user.is_superuser:  # Changed to is_superuser
+        return redirect('admin_dashboard')
+    return render(request, 'admin/login.html')
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+# ============================================
+# CUSTOM ADMIN LOGIN HANDLER
+# ============================================
+def admin_login(request):
+    """Handle admin login"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        
+        try:
+            user_obj = User.objects.get(email=email)
+            user = authenticate(username=user_obj.username, password=password)
+            
+            if user:
+                if user.is_superuser and user.is_active:  # Changed to is_superuser
+                    auth_login(request, user)
+                    return redirect('admin_dashboard')
+                else:
+                    return render(request, 'admin/login.html', {
+                        'error': 'Access Denied: Admin privileges required'
+                    })
+            else:
+                return render(request, 'admin/login.html', {
+                    'error': 'Invalid email or password'
+                })
+        except User.DoesNotExist:
+            return render(request, 'admin/login.html', {
+                'error': 'Invalid email or password'
+            })
     
-    def get_permissions(self):
-        if self.action in ['update', 'partial_update', 'destroy']:
-            self.permission_classes = [permissions.IsAuthenticated]
-        return super().get_permissions()
+    return redirect('admin_login_page')
+
+# ============================================
+# CUSTOM ADMIN DASHBOARD
+# ============================================
+@login_required
+def admin_dashboard(request):
+    """Custom Admin Dashboard"""
+    if not request.user.is_superuser:  # Changed to is_superuser
+        return redirect('admin_login_page')
     
-    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
-    def me(self, request):
-        serializer = self.get_serializer(request.user)
-        return Response(serializer.data)
+    context = {
+        'user': request.user,
+        'total_users': User.objects.count(),
+        'total_admins': User.objects.filter(is_superuser=True).count(),  # Changed
+        'total_mentors': User.objects.filter(is_mentor=True).count(),  # Requires is_mentor field
+        'total_doctors': User.objects.filter(is_doctor=True).count(),  # Requires is_doctor field
+        'recent_users': User.objects.order_by('-date_joined')[:5],
+    }
+    return render(request, 'admin/dashboard.html', context)
 
-class MentorViewSet(viewsets.ModelViewSet):
-    queryset = MentorProfile.objects.filter(is_active=True)
-    serializer_class = MentorSerializer
-    permission_classes = [permissions.IsAuthenticated, IsMentor]
+# ============================================
+# CUSTOM ADMIN LOGOUT
+# ============================================
+def admin_logout(request):
+    """Admin logout"""
+    auth_logout(request)
+    return redirect('admin_login_page')
 
-class DoctorViewSet(viewsets.ModelViewSet):
-    queryset = DoctorProfile.objects.filter(is_available=True)
-    serializer_class = DoctorSerializer
-    permission_classes = [permissions.IsAuthenticated, IsDoctor]
+# ============================================
+# API LOGIN (for mobile apps)
+# ============================================
+@api_view(['POST'])
+def api_login(request):
+    """API login"""
+    email = request.data.get('email')
+    password = request.data.get('password')
+    
+    try:
+        user_obj = User.objects.get(email=email)
+        user = authenticate(username=user_obj.username, password=password)
+        
+        # ✅ Fixed indentation here (4 spaces before if)
+        if user and user.is_superuser and user.is_active:
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'success': True,  # Added success field
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'is_superuser': user.is_superuser,  # Changed
+                }
+            })
+        return Response({'error': 'Invalid credentials'}, status=401)
+    except User.DoesNotExist:
+        return Response({'error': 'Invalid credentials'}, status=401)

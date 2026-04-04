@@ -238,17 +238,31 @@ function Login() {
         e.preventDefault();
         setLoading(true);
         setError('');
+        
         try {
-            const response = await axios.post('http://127.0.0.1:8000/api/login/', { username, password });
+            // ✅ Updated endpoint for user login
+            const response = await axios.post('http://127.0.0.1:8000/api/user/login/', { 
+                username, 
+                password 
+            });
+            
             if (response.data.success && response.data.token) {
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('user', JSON.stringify(response.data.user));
-                window.location.href = '/';
+                // ✅ Redirect to home page
+                navigate('/');
             } else {
                 setError(response.data.error || 'Login failed');
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'Invalid username or password');
+            console.error('Login error:', err);
+            if (err.response?.status === 404) {
+                setError('Login service not available. Please try again later.');
+            } else if (err.response?.data?.error) {
+                setError(err.response.data.error);
+            } else {
+                setError('Invalid username or password');
+            }
         } finally {
             setLoading(false);
         }
